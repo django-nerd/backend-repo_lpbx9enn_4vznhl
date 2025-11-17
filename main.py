@@ -1,6 +1,11 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Any, Dict
+
+from schemas import ContactInquiry
+from database import create_document
 
 app = FastAPI()
 
@@ -19,6 +24,15 @@ def read_root():
 @app.get("/api/hello")
 def hello():
     return {"message": "Hello from the backend API!"}
+
+@app.post("/api/contact")
+def create_contact(inquiry: ContactInquiry) -> Dict[str, Any]:
+    """Accept contact form submissions and persist to MongoDB."""
+    try:
+        inserted_id = create_document("contactinquiry", inquiry)
+        return {"status": "success", "id": inserted_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/test")
 def test_database():
